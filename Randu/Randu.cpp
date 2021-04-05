@@ -2,7 +2,9 @@
 #include <iostream>
 #include <cmath>
 #include "LCG.h"
-
+#include <random>
+#include <chrono>
+#include <iomanip>
 unsigned long long  modulus = pow(2, 31);
 int a = 65539;
 int seed = 1;
@@ -18,13 +20,14 @@ inline double F3(double x, double y, double z)
 {
 	return 5 * exp(x * y * z * 14);
 }
-double monteCarloEstimateF1(long int iterations, LCG& g);
-double monteCarloEstimateF2(long int iterations, LCG& g);
-double monteCarloEstimateF3(long int iterations, LCG& g);
+std::vector<double> monteCarloEstimateF1(long int iterations, LCG& g);
+std::vector<double> monteCarloEstimateF2(long int iterations, LCG& g);
+std::vector<double> monteCarloEstimateF3(long int iterations, LCG& g);
 
 inline double getValue(LCG& g) {
 	return (static_cast<double>(*g++) / modulus);
 };
+
 int main()
 {
 
@@ -33,66 +36,96 @@ int main()
 	LCG g1(a, seed, modulus),g2(a,seed,modulus),g3(a,seed,modulus);
 	// Iterations
 	const  int n_max = 10e6;
+
 	// Result from MATLAB
-	double res1 = 4.2950e+05, res2 = 3.3282e+04, res3 = 2.8570e+03;
-	//Estimations
-	double MC1Res = monteCarloEstimateF1(n_max, g1);
-	double MC2Res = monteCarloEstimateF2(n_max, g2);
-	double MC3Res = monteCarloEstimateF3(n_max, g3);
+	// double res1 = 4.2950e+05, res2 = 3.3282e+04, res3 = 2.8570e+03;
+
+	
+	
+
+	std::vector<double> MC1Res = monteCarloEstimateF1(n_max, g1);
+	std::vector<double> MC2Res = monteCarloEstimateF2(n_max, g2);
+	std::vector<double> MC3Res = monteCarloEstimateF3(n_max, g3);
 	std::cout << "Number of interations: " << n_max << std::endl;
-	std::cout << "Estimate: 1D " << MC1Res << " True value: " << res1 << " Error rate: " << (1 - res1/ MC1Res) * 100 << " % " << std::endl;
-	std::cout << "Estimate: 2D " << MC2Res << " True value: " << res2 << " Error rate: " << (1 - res2 / MC2Res) * 100 << " % " << std::endl;
-	std::cout << "Estimate: 3D " << MC3Res << " True value: " << res3 << " Error rate: " << (1 - res3 / MC3Res) * 100 << " % " << std::endl;
+	std::cout << "Randu estimate: 1D " << std::setw(10) <<MC1Res.at(0) << "| Mt estimate: " <<std::setw(10) << MC1Res.at(1) << std::setw(10) << " Error : " << std::setw(10) <<  abs(MC1Res.at(0) - MC1Res.at(1))/ MC1Res.at(1)  * 100  << " % " <<  std::endl;
+	std::cout << "Randu estimate: 2D " << std::setw(10) <<MC2Res.at(0) << "| Mt estimate: " <<  std::setw(10) << MC2Res.at(1) << std::setw(10) << " Error : " << std::setw(10) << abs(MC2Res.at(0) - MC2Res.at(1))/ MC2Res.at(1)  * 100  << " % " <<  std::endl;
+	std::cout << "Randu estimate: 3D " << std::setw(10) << MC3Res.at(0) << "| Mt estimate: " <<  std::setw(10) << MC3Res.at(1) << std::setw(10) << " Error : " << std::setw(10) << abs(MC3Res.at(0) - MC3Res.at(1)) / MC3Res.at(1)  * 100 << " % " << std::endl;
 		
 
 }
 
-double monteCarloEstimateF1(long int iterations, LCG& g)
+std::vector<double> monteCarloEstimateF1(long int iterations, LCG& g)
 
 {
-	double totalSum = 0;
-	double randNum, functionVal, x;
+	double totalSum1 = 0,totalSum2 = 0;
+	double randNum, functionVal1, functionVal2 ,x1,x2;
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-	int iter = 0;
+	std::mt19937 generator(seed);
+	int_fast64_t p = pow(2, generator.word_size) - 1;
 	for (int i = 0; i < iterations; ++i) {
-		x = getValue(g);
-		functionVal = F1(x);
-		totalSum += functionVal;
+		x1 = getValue(g);
+		x2 = static_cast<double> (generator()) / p;
+		functionVal1 = F1(x1);
+		functionVal2 = F1(x2);
+		totalSum1 += functionVal1;
+		totalSum2 += functionVal2;
 	}
-	double estimate = totalSum / iterations;
+	double estimate1 = totalSum1 / iterations;
+	double estimate2 = totalSum2 / iterations;
+	std::vector<double> estimate;
+	estimate.push_back(estimate1);
+	estimate.push_back(estimate2);
 	return estimate;
 }
-double monteCarloEstimateF2(long int iterations, LCG& g)
+std::vector<double> monteCarloEstimateF2(long int iterations, LCG& g)
 
 {
-	double totalSum = 0;
-	double randNum, functionVal, x, y;
+	double totalSum1 = 0, totalSum2 = 0;
+	double functionVal1, functionVal2, x1, y1, x2, y2;
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
+	std::mt19937 generator(seed);
+	int_fast64_t p = pow(2, generator.word_size) - 1;
 	int iter = 0;
 	for (int i = 0; i < iterations; ++i) {
-		x = getValue(g);
-		y = getValue(g);
-		functionVal = F2(x, y);
-		totalSum += functionVal;
+		x1 = getValue(g); x2 = static_cast<double> (generator()) / p;
+		y1 = getValue(g); y2 = static_cast<double> (generator()) / p;
+		functionVal1 = F2(x1, y1);
+		functionVal2 = F2(x2, y2);
+		totalSum1 += functionVal1;
+		totalSum2 += functionVal2;
 	}
-	double estimate = totalSum / iterations;
+	double estimate1 = totalSum1 / iterations;
+	double estimate2 = totalSum2 / iterations;
+	std::vector<double> estimate;
+	estimate.push_back(estimate1);
+	estimate.push_back(estimate2);
 	return estimate;
 }
-double monteCarloEstimateF3(long int iterations, LCG& g)
+std::vector<double> monteCarloEstimateF3(long int iterations, LCG& g)
 
 {
-	double totalSum = 0;
-	double randNum, functionVal, x, y, z;
+	double totalSum1 = 0, totalSum2 = 0;
+	double functionVal1, functionVal2, x1,y1,z1, x2,y2,z2;
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-	int iter = 0;
+	std::mt19937 generator(seed);
+	int_fast64_t p = pow(2, generator.word_size) - 1;
 	for (int i = 0; i < iterations; ++i) {
-		x = getValue(g);
-		y = getValue(g);
-		z = getValue(g);
-		functionVal = F3(x, y, z);
-		totalSum += functionVal;
+		x1 = getValue(g); x2 = static_cast<double> (generator()) / p;
+		y1 = getValue(g); y2 = static_cast<double> (generator()) / p;
+		z1 = getValue(g); z2 = static_cast<double> (generator()) / p;
+		functionVal1 = F3(x1, y1, z1);
+		functionVal2 = F3(x2, y2, z2);
+		totalSum1 += functionVal1;
+		totalSum2 += functionVal2;
 	}
-	double estimate = totalSum / iterations;
+	double estimate1 = totalSum1 / iterations;
+	double estimate2 = totalSum2 / iterations;
+	std::vector<double> estimate;
+	estimate.push_back(estimate1);
+	estimate.push_back(estimate2);
 	return estimate;
 }
 
