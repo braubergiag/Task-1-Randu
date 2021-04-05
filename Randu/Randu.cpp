@@ -7,7 +7,12 @@
 #include <iomanip>
 unsigned long long  modulus = pow(2, 31);
 int a = 65539;
-int seed = 1;
+int seedRandu = 1;
+unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+std::mt19937 generator(seed);
+std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+
 inline double F1(double x)
 {
 	return 5 * exp(x * 14);
@@ -33,7 +38,7 @@ int main()
 
 	
 	
-	LCG g1(a, seed, modulus),g2(a,seed,modulus),g3(a,seed,modulus);
+	LCG g1(a, seedRandu, modulus),g2(a, seedRandu,modulus),g3(a, seedRandu,modulus);
 	// Iterations
 	const  int n_max = 10e6;
 
@@ -59,13 +64,11 @@ std::vector<double> monteCarloEstimateF1(long int iterations, LCG& g)
 {
 	double totalSum1 = 0,totalSum2 = 0;
 	double randNum, functionVal1, functionVal2 ,x1,x2;
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-	std::mt19937 generator(seed);
-	int_fast64_t p = pow(2, generator.word_size) - 1;
+	
 	for (int i = 0; i < iterations; ++i) {
 		x1 = getValue(g);
-		x2 = static_cast<double> (generator()) / p;
+		x2 = dist(generator);
 		functionVal1 = F1(x1);
 		functionVal2 = F1(x2);
 		totalSum1 += functionVal1;
@@ -83,14 +86,11 @@ std::vector<double> monteCarloEstimateF2(long int iterations, LCG& g)
 {
 	double totalSum1 = 0, totalSum2 = 0;
 	double functionVal1, functionVal2, x1, y1, x2, y2;
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-	std::mt19937 generator(seed);
-	int_fast64_t p = pow(2, generator.word_size) - 1;
-	int iter = 0;
+
 	for (int i = 0; i < iterations; ++i) {
-		x1 = getValue(g); x2 = static_cast<double> (generator()) / p;
-		y1 = getValue(g); y2 = static_cast<double> (generator()) / p;
+		x1 = getValue(g); x2 = dist(generator);
+		y1 = getValue(g); y2 = dist(generator);
 		functionVal1 = F2(x1, y1);
 		functionVal2 = F2(x2, y2);
 		totalSum1 += functionVal1;
@@ -108,14 +108,11 @@ std::vector<double> monteCarloEstimateF3(long int iterations, LCG& g)
 {
 	double totalSum1 = 0, totalSum2 = 0;
 	double functionVal1, functionVal2, x1,y1,z1, x2,y2,z2;
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-	std::mt19937 generator(seed);
-	int_fast64_t p = pow(2, generator.word_size) - 1;
 	for (int i = 0; i < iterations; ++i) {
-		x1 = getValue(g); x2 = static_cast<double> (generator()) / p;
-		y1 = getValue(g); y2 = static_cast<double> (generator()) / p;
-		z1 = getValue(g); z2 = static_cast<double> (generator()) / p;
+		x1 = getValue(g); x2 = dist(generator);
+		y1 = getValue(g); y2 = dist(generator);
+		z1 = getValue(g); z2 = dist(generator);
 		functionVal1 = F3(x1, y1, z1);
 		functionVal2 = F3(x2, y2, z2);
 		totalSum1 += functionVal1;
